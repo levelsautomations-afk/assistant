@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Lora:wght@500&display=swap">
+<script src="https://accounts.google.com/gsi/client" async></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F7F5;
+  --surface:#FFFFFF;
+  --sidebar:#131416;
+  --sidebar-hover:rgba(255,255,255,0.06);
+  --sidebar-active:rgba(255,255,255,0.1);
+  --accent:#2563EB;
+  --accent-light:#EFF6FF;
+  --accent-dark:#1D4ED8;
+  --green:#16A34A;
+  --green-light:#F0FDF4;
+  --red:#DC2626;
+  --red-light:#FEF2F2;
+  --amber:#D97706;
+  --amber-light:#FFFBEB;
+  --text:#111827;
+  --text-2:#374151;
+  --text-3:#6B7280;
+  --text-4:#9CA3AF;
+  --border:#E5E7EB;
+  --border-2:#D1D5DB;
+  --radius:10px;
+  --radius-lg:14px;
+  --font:'Plus Jakarta Sans',sans-serif;
+  --font-serif:'Lora',serif;
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg:0 4px 16px rgba(0,0,0,0.1),0 2px 6px rgba(0,0,0,0.06);
+}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* ── Layout ── */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:240px;flex-shrink:0;background:var(--sidebar);display:flex;flex-direction:column;padding:0;overflow:hidden}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* ── Sidebar ── */
+.sb-top{padding:20px 16px 12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.sb-logo{font-family:var(--font-serif);font-size:17px;color:#fff;font-weight:500;letter-spacing:-0.01em;margin-bottom:2px}
+.sb-sub{font-size:11px;color:rgba(255,255,255,0.35);font-weight:400}
+.sb-account{margin:8px 10px 0;padding:8px 8px;border-radius:var(--radius);background:rgba(255,255,255,0.05);display:flex;align-items:center;gap:8px;cursor:pointer}
+.sb-account:hover{background:rgba(255,255,255,0.08)}
+.sb-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0}
+.sb-email-text{font-size:11px;color:rgba(255,255,255,0.6);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-dot{width:6px;height:6px;border-radius:50%;background:#4ADE80;margin-left:auto;flex-shrink:0}
+.sb-section{padding:16px 10px 4px}
+.sb-label{font-size:10px;font-weight:600;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:0.08em;padding:0 6px;margin-bottom:4px}
+.sb-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,0.65);font-size:13px;font-family:var(--font);width:100%;text-align:left;transition:background 0.15s,color 0.15s}
+.sb-btn:hover{background:var(--sidebar-hover);color:#fff}
+.sb-btn svg{flex-shrink:0;opacity:0.7}
+.sb-btn:hover svg{opacity:1}
+.sb-divider{height:1px;background:rgba(255,255,255,0.06);margin:8px 10px}
+.sb-footer{margin-top:auto;padding:12px 10px;border-top:1px solid rgba(255,255,255,0.06)}
+.sb-signout{font-size:12px;color:rgba(255,255,255,0.3);cursor:pointer;padding:4px 6px;border-radius:6px;display:inline-block}
+.sb-signout:hover{color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.05)}
+
+/* ── Chat Header ── */
+.chat-header{padding:14px 24px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.chat-title{font-size:15px;font-weight:600;color:var(--text)}
+.chat-status{font-size:12px;color:var(--text-3);display:flex;align-items:center;gap:5px}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.hdr-btns{display:flex;gap:6px}
+.hdr-btn{padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;font-size:12px;font-family:var(--font);color:var(--text-2);cursor:pointer}
+.hdr-btn:hover{background:var(--bg)}
+
+/* ── Messages ── */
+.messages{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px}
+.messages::-webkit-scrollbar{width:4px}
+.messages::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:2px}
+.msg-row{display:flex;gap:10px;max-width:780px;width:100%}
+.msg-row.user{align-self:flex-end;flex-direction:row-reverse}
+.msg-row.assistant{align-self:flex-start}
+.msg-icon{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-top:2px}
+.msg-icon.ai{background:var(--sidebar);color:#fff}
+.msg-icon.user{background:var(--accent);color:#fff}
+.bubble{padding:10px 14px;border-radius:var(--radius-lg);font-size:14px;line-height:1.65;max-width:640px}
+.bubble.ai{background:var(--surface);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+.bubble.user{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.bubble.user a{color:#BFDBFE}
+.bubble pre,.bubble code{font-family:ui-monospace,monospace;font-size:13px}
+.bubble pre{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;overflow-x:auto;margin:8px 0}
+.bubble p+p{margin-top:6px}
+.bubble ul,.bubble ol{padding-left:18px;margin:6px 0}
+.bubble li{margin:2px 0}
+.bubble strong{font-weight:600}
+.bubble h3{font-size:14px;font-weight:600;margin:10px 0 4px}
+.bubble hr{border:none;border-top:1px solid var(--border);margin:10px 0}
+
+/* Status bubble */
+.status-bubble{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text-3);align-self:flex-start;margin-left:38px}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Email confirm card */
+.confirm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-top:8px;max-width:560px}
+.confirm-card .cc-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-4);margin-bottom:10px}
+.confirm-field{display:flex;gap:8px;margin-bottom:6px;font-size:13px}
+.confirm-field .cf-key{color:var(--text-3);min-width:52px;flex-shrink:0}
+.confirm-field .cf-val{color:var(--text-2);font-weight:500}
+.confirm-body-preview{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text-2);margin:10px 0;white-space:pre-wrap;max-height:160px;overflow-y:auto;line-height:1.6}
+.confirm-actions{display:flex;gap:8px;margin-top:12px}
+.btn-send{padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;font-family:var(--font);cursor:pointer}
+.btn-send:hover{background:var(--accent-dark)}
+.btn-cancel-send{padding:7px 14px;background:transparent;color:var(--text-2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);cursor:pointer}
+.btn-cancel-send:hover{background:var(--bg)}
+
+/* ── Input area ── */
+.input-area{padding:16px 24px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.input-wrap{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);display:flex;align-items:flex-end;gap:8px;padding:10px 12px;transition:border-color 0.15s}
+.input-wrap:focus-within{border-color:var(--accent);background:var(--surface)}
+textarea#msg{flex:1;border:none;background:transparent;font-size:14px;font-family:var(--font);color:var(--text);resize:none;min-height:24px;max-height:140px;outline:none;line-height:1.6}
+textarea#msg::placeholder{color:var(--text-4)}
+.send-btn{width:32px;height:32px;border-radius:8px;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s,transform 0.1s}
+.send-btn:hover{background:var(--accent-dark)}
+.send-btn:active{transform:scale(0.95)}
+.send-btn:disabled{background:var(--border-2);cursor:default}
+.input-hint{font-size:11px;color:var(--text-4);margin-top:6px;text-align:right}
+
+/* ── Setup Overlay ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+.setup-box{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.setup-header{padding:28px 28px 0;border-bottom:1px solid var(--border);padding-bottom:20px}
+.setup-logo{font-family:var(--font-serif);font-size:22px;font-weight:500;margin-bottom:4px}
+.setup-desc{font-size:14px;color:var(--text-3);line-height:1.6}
+.setup-steps{padding:0 28px 28px}
+.step{padding:20px 0;border-bottom:1px solid var(--border)}
+.step:last-child{border-bottom:none}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:600;margin-bottom:8px}
+.step-title{font-size:15px;font-weight:600;margin-bottom:4px}
+.step-body{font-size:13px;color:var(--text-3);line-height:1.65;margin-bottom:12px}
+.step-body a{color:var(--accent)}
+.step-body code{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:1px 5px;font-family:ui-monospace,monospace;font-size:12px;color:var(--text-2)}
+.field-label{font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:5px}
+input.field{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:var(--font);color:var(--text);background:var(--bg);outline:none}
+input.field:focus{border-color:var(--accent);background:var(--surface)}
+input.field::placeholder{color:var(--text-4)}
+.connect-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 20px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-weight:500;font-family:var(--font);color:var(--text);cursor:pointer;width:100%;transition:background 0.15s,box-shadow 0.15s}
+.connect-btn:hover{background:var(--bg);box-shadow:var(--shadow)}
+.connect-btn:disabled{opacity:0.5;cursor:default}
+.btn-primary{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;margin-top:4px}
+.btn-primary:hover{background:var(--accent-dark)}
+.btn-primary:disabled{background:var(--border-2);cursor:default}
+.connected-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--green-light);border:1px solid #BBF7D0;border-radius:99px;font-size:12px;font-weight:500;color:var(--green)}
+.error-msg{font-size:12px;color:var(--red);margin-top:6px}
+
+/* Inline notice */
+.notice{background:var(--amber-light);border:1px solid #FDE68A;border-radius:8px;padding:10px 12px;font-size:13px;color:#92400E;margin-top:8px;line-height:1.6}
+
+/* Welcome empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:8px;color:var(--text-3);text-align:center;padding:40px}
+.empty-state svg{opacity:0.3;margin-bottom:4px}
+.empty-title{font-size:16px;font-weight:500;color:var(--text-2)}
+.empty-body{font-size:13px;color:var(--text-3);max-width:320px;line-height:1.6}
+.quick-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;max-width:440px}
+.chip{padding:7px 14px;background:var(--surface);border:1px solid var(--border);border-radius:99px;font-size:13px;color:var(--text-2);cursor:pointer;transition:background 0.15s,border-color 0.15s}
+.chip:hover{background:var(--accent-light);border-color:#93C5FD;color:var(--accent)}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP OVERLAY ══ -->
+<div class="overlay" id="setup-overlay">
+  <div class="setup-box">
+    <div class="setup-header">
+      <div class="setup-logo">Business Assistant</div>
+      <div class="setup-desc">Your AI-powered email assistant. Set up takes about 10 minutes — you only do this once.</div>
+    </div>
+    <div class="setup-steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Anthropic API key</div>
+        <div class="step-body">
+          Go to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → sign up or log in → click <strong>API Keys</strong> in the sidebar → <strong>Create Key</strong>. Copy and paste it here.<br><br>
+          <strong>Cost:</strong> You'll be charged per use. For two people doing email tasks, expect roughly $1–5/month.
+        </div>
+        <div class="field-label">API Key</div>
+        <input class="field" id="api-key" type="password" placeholder="sk-ant-api03-…" autocomplete="off">
+        <div class="error-msg hidden" id="api-err">Please enter a valid API key.</div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">Google Cloud — Gmail access</div>
+        <div class="step-body">
+          This lets the assistant read and send your email. Follow these steps:<br><br>
+          1. Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> and create a new project (name it anything).<br>
+          2. In the left menu → <strong>APIs &amp; Services</strong> → <strong>Enable APIs</strong> → search for <strong>Gmail API</strong> → Enable.<br>
+          3. Go to <strong>APIs &amp; Services</strong> → <strong>Credentials</strong> → <strong>Create Credentials</strong> → <strong>OAuth client ID</strong>.<br>
+          4. Choose <strong>Web application</strong>. Under <em>Authorized JavaScript origins</em>, add your site URL (e.g. <code>https://yourusername.github.io</code>).<br>
+          5. Copy the <strong>Client ID</strong> and paste it below.<br>
+          6. Go to <strong>OAuth consent screen</strong> → add your email as a <strong>Test user</strong>.
+        </div>
+        <div class="field-label">Google OAuth Client ID</div>
+        <input class="field" id="client-id" type="text" placeholder="123456789-abc….apps.googleusercontent.com" autocomplete="off">
+        <div class="error-msg hidden" id="client-err">Please enter your Google Client ID.</div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">Sign in with Google</div>
+        <div class="step-body">Connect your business Gmail account so the assistant can access your inbox.</div>
+        <div id="connect-status">
+          <button class="connect-btn" id="google-btn" onclick="startGoogleAuth()" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Connect Gmail
+          </button>
+          <div class="notice" style="margin-top:10px">Enter your API key and Client ID above first, then this button will activate.</div>
+        </div>
+        <div class="connected-badge hidden" id="connected-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="connected-email-text">Connected</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">Deploy to GitHub Pages (free hosting)</div>
+        <div class="step-body">
+          So you and your partner can both access it from any browser:<br><br>
+          1. Go to <a href="https://github.com" target="_blank">github.com</a> → create a free account → <strong>New repository</strong> → name it <code>assistant</code> → set to <strong>Public</strong>.<br>
+          2. Upload this HTML file, renamed to <code>index.html</code>.<br>
+          3. Go to repository <strong>Settings</strong> → <strong>Pages</strong> → Source: <strong>Deploy from a branch</strong> → select <code>main</code> → Save.<br>
+          4. Your URL will be <code>https://yourusername.github.io/assistant</code> — share this with your partner.<br>
+          5. Go back to your Google Cloud Console → Credentials → your OAuth client → add this URL to <em>Authorized JavaScript origins</em>.
+        </div>
+        <div class="notice">
+          <strong>Security note:</strong> Your API key is saved in your browser only (localStorage). Don't share the raw HTML file with the key already in it — each person enters their own key on first visit.
+        </div>
+      </div>
+
+      <button class="btn-primary" id="launch-btn" onclick="launch()" disabled>Launch Assistant →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div class="app hidden" id="app">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sb-top">
+      <div class="sb-logo">Assistant</div>
+      <div class="sb-sub">Business email &amp; tasks</div>
+      <div class="sb-account" id="sb-account">
+        <div class="sb-avatar" id="sb-avatar">?</div>
+        <div class="sb-email-text" id="sb-email-display">Not connected</div>
+        <div class="sb-dot"></div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Email</div>
+      <button class="sb-btn" onclick="quick('Check my inbox — summarize unread emails and tell me which ones need attention today')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>
+        Check inbox
+      </button>
+      <button class="sb-btn" onclick="quick('Triage my unread emails — prioritize as Urgent, Reply needed, FYI, or Low priority. Be specific about which ones need action and why.')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Triage inbox
+      </button>
+      <button class="sb-btn" onclick="quick('What emails have I not replied to that I probably should have? Look through recent messages and flag anything that seems to be waiting on a response from me.')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Follow-ups due
+      </button>
+      <button class="sb-btn" onclick="quick('Help me draft a reply to my most recent unread email. Read the email first, understand the context, then write a professional and appropriate response.')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Draft a reply
+      </button>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+      <div class="sb-label">Business</div>
+      <button class="sb-btn" onclick="quick('Give me a complete morning briefing: summarize my unread emails highlighting anything urgent, list any action items or deadlines you can spot, and tell me what I should tackle first today.')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        Morning briefing
+      </button>
+      <button class="sb-btn" onclick="quick('Search my email for any invoices, receipts, or payment-related emails. Give me a summary of what you find.')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+        Find invoices
+      </button>
+      <button class="sb-btn" onclick="quick('Search my inbox for any newsletters, mailing lists, or subscription emails I could unsubscribe from to reduce inbox clutter. List them out.')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        Clean subscriptions
+      </button>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+      <div class="sb-label">Compose</div>
+      <button class="sb-btn" onclick="quick('I need to compose a new email. Ask me who it\'s to, the subject, and what I want to say — then write it for me professionally.')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        New email
+      </button>
+    </div>
+
+    <div class="sb-footer">
+      <span class="sb-signout" onclick="signOut()">Sign out</span>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="chat-header">
+      <div>
+        <div class="chat-title">Business Assistant</div>
+        <div class="chat-status">
+          <div class="status-dot"></div>
+          <span id="header-email">Ready</span>
+        </div>
+      </div>
+      <div class="hdr-btns">
+        <button class="hdr-btn" onclick="clearChat()">Clear chat</button>
+      </div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="empty-state" id="empty-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>
+        <div class="empty-title">Your inbox, at your command</div>
+        <div class="empty-body">Ask me anything — check emails, triage your inbox, draft replies, search for messages, or compose something new.</div>
+        <div class="quick-chips">
+          <div class="chip" onclick="quick('What are my most important unread emails right now?')">What needs my attention?</div>
+          <div class="chip" onclick="quick('Summarize my last 10 emails in a quick briefing')">Quick inbox summary</div>
+          <div class="chip" onclick="quick('Search for any emails from clients or customers that need a reply')">Client emails</div>
+          <div class="chip" onclick="quick('Draft a professional follow-up email — ask me for the details')">Write a follow-up</div>
+          <div class="chip" onclick="quick('Find any emails about payments, invoices, or money')">Financial emails</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrap">
+        <textarea id="msg" placeholder="Ask anything about your inbox…" rows="1"
+          oninput="autoResize(this)"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMsg()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+        </button>
+      </div>
+      <div class="input-hint">Enter to send · Shift+Enter for new line</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ STATE ══
+let CONFIG = { apiKey: '', clientId: '' };
+let gmailToken = null;
+let gmailEmail = '';
+let tokenClient = null;
+let conversationHistory = [];
+let isBusy = false;
+let pendingSend = null;
+
+const SYSTEM_PROMPT = `You are a sharp, proactive business assistant with direct access to Gmail via tools. You work for a small business and your job is to help the owners stay on top of their email and communications.
+
+Your capabilities:
+- Read, search, and summarize emails from Gmail
+- Draft and send emails on their behalf  
+- Triage and prioritize the inbox
+- Find specific emails, threads, or senders
+- Identify what needs attention, follow-ups that are overdue, etc.
+- Answer questions about email content
+
+Guidelines:
+- Always use the tools to fetch real data before answering email questions. Never guess or make up email content.
+- When listing emails, format them clearly: sender name, subject, brief summary, and any action needed.
+- When drafting emails, write complete, professional messages ready to send — not templates with placeholders.
+- For sending: always use the send_email tool. A confirmation step will happen automatically — you don't need to ask the user to confirm in your message.
+- Be concise but thorough. Use bullet points and formatting to make responses scannable.
+- If you can't find something or an action fails, say so clearly.
+- Be proactive — if you see something important while checking emails, mention it even if they didn't ask.
+
+Tone: Direct, capable, slightly warm. Like a smart executive assistant who knows the business well.`;
+
+// ══ TOOLS ══
+const TOOLS = [
+  {
+    name: 'list_emails',
+    description: 'List emails from the Gmail inbox. Returns emails with id, subject, sender, date, snippet, and read status.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        maxResults: { type: 'number', description: 'Number of emails to return (default 15, max 50)' },
+        query: { type: 'string', description: 'Gmail search query e.g. "is:unread", "from:john@example.com", "subject:invoice"' }
+      }
+    }
+  },
+  {
+    name: 'get_email',
+    description: 'Get the full content of a specific email by its ID. Returns the complete email body, headers, and thread info.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        messageId: { type: 'string', description: 'The Gmail message ID' }
+      },
+      required: ['messageId']
+    }
+  },
+  {
+    name: 'search_emails',
+    description: 'Search emails using Gmail search syntax. More targeted than list_emails.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Gmail search query. Examples: "from:boss@company.com", "subject:invoice", "is:unread after:2024/01/01", "has:attachment"' },
+        maxResults: { type: 'number', description: 'Number of results to return (default 20)' }
+      },
+      required: ['query']
+    }
+  },
+  {
+    name: 'send_email',
+    description: 'Send an email. This will show a confirmation preview to the user before actually sending.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        to: { type: 'string', description: 'Recipient email address(es), comma-separated for multiple' },
+        subject: { type: 'string', description: 'Email subject line' },
+        body: { type: 'string', description: 'Email body (plain text)' },
+        threadId: { type: 'string', description: 'If replying to a thread, provide the thread ID' },
+        inReplyTo: { type: 'string', description: 'Message-ID header of the email being replied to' }
+      },
+      required: ['to', 'subject', 'body']
+    }
+  },
+  {
+    name: 'create_draft',
+    description: 'Save an email as a draft in Gmail (does not send).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        to: { type: 'string', description: 'Recipient email address' },
+        subject: { type: 'string', description: 'Email subject line' },
+        body: { type: 'string', description: 'Email body (plain text)' },
+        threadId: { type: 'string', description: 'Thread ID if this is a reply' }
+      },
+      required: ['to', 'subject', 'body']
+    }
+  }
+];
+
+// ══ INIT ══
+window.onload = () => {
+  const saved = localStorage.getItem('biz_config');
+  if (saved) {
+    CONFIG = JSON.parse(saved);
+    document.getElementById('api-key').value = CONFIG.apiKey || '';
+    document.getElementById('client-id').value = CONFIG.clientId || '';
+  }
+  updateSetupUI();
+  document.getElementById('api-key').addEventListener('input', updateSetupUI);
+  document.getElementById('client-id').addEventListener('input', updateSetupUI);
+};
+
+function updateSetupUI() {
+  const key = document.getElementById('api-key').value.trim();
+  const cid = document.getElementById('client-id').value.trim();
+  const btn = document.getElementById('google-btn');
+  const notice = btn.nextElementSibling;
+  if (key && cid) {
+    btn.disabled = false;
+    if (notice) notice.style.display = 'none';
+  } else {
+    btn.disabled = true;
+    if (notice) notice.style.display = '';
+  }
+  const hasGmail = !!gmailEmail;
+  document.getElementById('launch-btn').disabled = !(key && hasGmail);
+}
+
+// ══ GOOGLE AUTH ══
+function startGoogleAuth() {
+  const clientId = document.getElementById('client-id').value.trim();
+  if (!clientId) { document.getElementById('client-err').classList.remove('hidden'); return; }
+  
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: clientId,
+    scope: 'https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email',
+    callback: handleTokenResponse
+  });
+  tokenClient.requestAccessToken({ prompt: 'select_account' });
+}
+
+async function handleTokenResponse(resp) {
+  if (resp.error) { console.error(resp); return; }
+  gmailToken = resp.access_token;
+  
+  // Get email address
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: 'Bearer ' + gmailToken }
+    });
+    const info = await r.json();
+    gmailEmail = info.email;
+  } catch(e) {
+    const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+      headers: { Authorization: 'Bearer ' + gmailToken }
+    });
+    const p = await r.json();
+    gmailEmail = p.emailAddress;
+  }
+
+  document.getElementById('connected-badge').classList.remove('hidden');
+  document.getElementById('connected-email-text').textContent = '✓ ' + gmailEmail;
+  document.getElementById('connect-status').style.display = 'none';
+  updateSetupUI();
+}
+
+function launch() {
+  const key = document.getElementById('api-key').value.trim();
+  if (!key) { document.getElementById('api-err').classList.remove('hidden'); return; }
+  
+  CONFIG.apiKey = key;
+  CONFIG.clientId = document.getElementById('client-id').value.trim();
+  localStorage.setItem('biz_config', JSON.stringify(CONFIG));
+  
+  document.getElementById('setup-overlay').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  
+  // Update UI
+  const initials = gmailEmail ? gmailEmail[0].toUpperCase() : '?';
+  document.getElementById('sb-avatar').textContent = initials;
+  document.getElementById('sb-email-display').textContent = gmailEmail;
+  document.getElementById('header-email').textContent = gmailEmail;
+}
+
+function signOut() {
+  if (!confirm('Sign out and clear your session?')) return;
+  gmailToken = null; gmailEmail = '';
+  conversationHistory = [];
+  localStorage.removeItem('biz_config');
+  location.reload();
+}
+
+// ══ GMAIL API ══
+async function gmailReq(path, method = 'GET', body = null) {
+  if (!gmailToken) throw new Error('Not authenticated with Gmail');
+  const opts = { method, headers: { Authorization: 'Bearer ' + gmailToken, 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch('https://gmail.googleapis.com/gmail/v1' + path, opts);
+  if (!r.ok) throw new Error('Gmail API error: ' + r.status + ' ' + await r.text());
+  return r.json();
+}
+
+function b64decode(s) {
+  try { return decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/')))) } catch { return atob(s.replace(/-/g,'+').replace(/_/g,'/')) }
+}
+
+function getHeader(headers, name) {
+  return (headers.find(h => h.name.toLowerCase() === name.toLowerCase()) || {}).value || '';
+}
+
+function extractBody(payload) {
+  if (!payload) return '';
+  if (payload.body && payload.body.data) return b64decode(payload.body.data);
+  if (payload.parts) {
+    for (const p of payload.parts) {
+      if (p.mimeType === 'text/plain' && p.body && p.body.data) return b64decode(p.body.data);
+    }
+    for (const p of payload.parts) {
+      const r = extractBody(p);
+      if (r) return r;
+    }
+  }
+  return '';
+}
+
+async function toolListEmails({ maxResults = 15, query = 'in:inbox' }) {
+  const params = new URLSearchParams({ maxResults: Math.min(maxResults, 50), q: query || 'in:inbox' });
+  const data = await gmailReq('/users/me/messages?' + params);
+  if (!data.messages || data.messages.length === 0) return { emails: [], count: 0 };
+  
+  const emails = await Promise.all(data.messages.slice(0, maxResults).map(async m => {
+    const msg = await gmailReq(`/users/me/messages/${m.id}?format=metadata&metadataHeaders=Subject,From,To,Date`);
+    const h = msg.payload.headers;
+    return {
+      id: msg.id,
+      threadId: msg.threadId,
+      subject: getHeader(h, 'Subject') || '(no subject)',
+      from: getHeader(h, 'From'),
+      to: getHeader(h, 'To'),
+      date: getHeader(h, 'Date'),
+      snippet: msg.snippet,
+      isUnread: (msg.labelIds || []).includes('UNREAD'),
+      labels: msg.labelIds || []
+    };
+  }));
+  return { emails, count: emails.length };
+}
+
+async function toolGetEmail({ messageId }) {
+  const msg = await gmailReq(`/users/me/messages/${messageId}?format=full`);
+  const h = msg.payload.headers;
+  return {
+    id: msg.id,
+    threadId: msg.threadId,
+    subject: getHeader(h, 'Subject'),
+    from: getHeader(h, 'From'),
+    to: getHeader(h, 'To'),
+    date: getHeader(h, 'Date'),
+    messageId: getHeader(h, 'Message-ID'),
+    body: extractBody(msg.payload).substring(0, 4000),
+    isUnread: (msg.labelIds || []).includes('UNREAD'),
+    labels: msg.labelIds || []
+  };
+}
+
+async function toolSearchEmails({ query, maxResults = 20 }) {
+  return toolListEmails({ maxResults, query });
+}
+
+function makeRawEmail(to, subject, body, from, threadId, inReplyTo) {
+  const headers = [
+    `From: ${from}`,
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/plain; charset=UTF-8',
+    inReplyTo ? `In-Reply-To: ${inReplyTo}` : null,
+    inReplyTo ? `References: ${inReplyTo}` : null
+  ].filter(Boolean).join('\r\n');
+  const raw = headers + '\r\n\r\n' + body;
+  return btoa(unescape(encodeURIComponent(raw))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+async function actualSendEmail(params) {
+  const raw = makeRawEmail(params.to, params.subject, params.body, gmailEmail, params.threadId, params.inReplyTo);
+  const body = { raw };
+  if (params.threadId) body.threadId = params.threadId;
+  const result = await gmailReq('/users/me/messages/send', 'POST', body);
+  return { success: true, messageId: result.id, message: 'Email sent successfully.' };
+}
+
+async function toolCreateDraft({ to, subject, body, threadId }) {
+  const raw = makeRawEmail(to, subject, body, gmailEmail, threadId);
+  const draftBody = { message: { raw } };
+  if (threadId) draftBody.message.threadId = threadId;
+  const result = await gmailReq('/users/me/drafts', 'POST', draftBody);
+  return { success: true, draftId: result.id, message: 'Draft saved to Gmail.' };
+}
+
+// ══ SEND CONFIRM ══
+function showSendConfirm(params, resolve) {
+  pendingSend = { params, resolve };
+  // Show as a special message in chat
+  const msgsEl = document.getElementById('messages');
+  const el = document.createElement('div');
+  el.id = 'send-confirm-card';
+  el.innerHTML = `
+    <div class="confirm-card">
+      <div class="cc-label">Ready to send — please confirm</div>
+      <div class="confirm-field"><span class="cf-key">To:</span><span class="cf-val">${esc(params.to)}</span></div>
+      <div class="confirm-field"><span class="cf-key">Subject:</span><span class="cf-val">${esc(params.subject)}</span></div>
+      <div class="confirm-body-preview">${esc(params.body)}</div>
+      <div class="confirm-actions">
+        <button class="btn-send" onclick="confirmSend(true)">Send email</button>
+        <button class="btn-cancel-send" onclick="confirmSend(false)">Cancel</button>
+      </div>
+    </div>`;
+  msgsEl.appendChild(el);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+
+function confirmSend(yes) {
+  const card = document.getElementById('send-confirm-card');
+  if (card) card.remove();
+  if (!pendingSend) return;
+  const { params, resolve } = pendingSend;
+  pendingSend = null;
+  if (yes) {
+    resolve(actualSendEmail(params).catch(e => ({ success: false, error: e.message })));
+  } else {
+    resolve(Promise.resolve({ success: false, cancelled: true, message: 'User cancelled sending.' }));
+  }
+}
+
+// ══ TOOL EXECUTOR ══
+const STATUS_MSGS = {
+  list_emails: 'Checking your inbox…',
+  get_email: 'Reading email…',
+  search_emails: 'Searching emails…',
+  send_email: 'Preparing to send…',
+  create_draft: 'Saving draft…'
+};
+
+async function executeTool(name, input) {
+  try {
+    switch(name) {
+      case 'list_emails': return await toolListEmails(input);
+      case 'get_email': return await toolGetEmail(input);
+      case 'search_emails': return await toolSearchEmails(input);
+      case 'send_email': {
+        return await new Promise(resolve => showSendConfirm(input, resolve));
+      }
+      case 'create_draft': return await toolCreateDraft(input);
+      default: return { error: 'Unknown tool: ' + name };
+    }
+  } catch(e) {
+    return { error: e.message };
+  }
+}
+
+// ══ ANTHROPIC API ══
+async function callAnthropic(messages) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': CONFIG.apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-4-5',
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
+      tools: TOOLS,
+      messages
+    })
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'API error ' + r.status);
+  }
+  return r.json();
+}
+
+// ══ AGENTIC LOOP ══
+async function agentLoop(userMessage) {
+  conversationHistory.push({ role: 'user', content: userMessage });
+  document.getElementById('empty-state')?.remove();
+
+  let statusEl = addStatusBubble('Thinking…');
+
+  try {
+    while (true) {
+      const resp = await callAnthropic(conversationHistory);
+      
+      const toolUses = resp.content.filter(b => b.type === 'tool_use');
+      const texts = resp.content.filter(b => b.type === 'text');
+
+      if (toolUses.length === 0 || resp.stop_reason === 'end_turn') {
+        // Final response
+        statusEl?.remove(); statusEl = null;
+        const finalText = texts.map(b => b.text).join('\n').trim();
+        if (finalText) {
+          conversationHistory.push({ role: 'assistant', content: resp.content });
+          addAssistantBubble(finalText);
+        }
+        break;
+      }
+
+      // Execute tools
+      conversationHistory.push({ role: 'assistant', content: resp.content });
+
+      const toolResults = [];
+      for (const tu of toolUses) {
+        if (statusEl) { statusEl.querySelector('span').textContent = STATUS_MSGS[tu.name] || 'Working…'; }
+        const result = await executeTool(tu.name, tu.input);
+        toolResults.push({ type: 'tool_result', tool_use_id: tu.id, content: JSON.stringify(result) });
+      }
+      conversationHistory.push({ role: 'user', content: toolResults });
+      if (statusEl) statusEl.querySelector('span').textContent = 'Almost done…';
+    }
+  } catch(e) {
+    statusEl?.remove();
+    addAssistantBubble('Sorry, something went wrong: ' + e.message);
+    conversationHistory.pop(); // remove failed user message
+  }
+}
+
+// ══ UI HELPERS ══
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+function formatMessage(text) {
+  // Convert markdown-ish to HTML
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^---$/gm,'<hr>')
+    .replace(/\n/g,'<br>');
+}
+
+function addStatusBubble(text) {
+  const el = document.createElement('div');
+  el.className = 'status-bubble';
+  el.innerHTML = `<div class="spinner"></div><span>${text}</span>`;
+  document.getElementById('messages').appendChild(el);
+  document.getElementById('messages').scrollTop = 99999;
+  return el;
+}
+
+function addAssistantBubble(text) {
+  const msgsEl = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = 'msg-row assistant';
+  row.innerHTML = `
+    <div class="msg-icon ai">A</div>
+    <div class="bubble ai">${formatMessage(text)}</div>`;
+  msgsEl.appendChild(row);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+
+function addUserBubble(text) {
+  const msgsEl = document.getElementById('messages');
+  document.getElementById('empty-state')?.remove();
+  const row = document.createElement('div');
+  row.className = 'msg-row user';
+  row.innerHTML = `<div class="msg-icon user">${gmailEmail ? gmailEmail[0].toUpperCase() : 'U'}</div><div class="bubble user">${esc(text)}</div>`;
+  msgsEl.appendChild(row);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+async function sendMsg() {
+  if (isBusy) return;
+  const inp = document.getElementById('msg');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = ''; inp.style.height = 'auto';
+  isBusy = true;
+  document.getElementById('send-btn').disabled = true;
+  addUserBubble(text);
+  await agentLoop(text);
+  isBusy = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+function quick(text) {
+  if (isBusy) return;
+  document.getElementById('msg').value = text;
+  sendMsg();
+}
+
+function clearChat() {
+  conversationHistory = [];
+  const msgs = document.getElementById('messages');
+  msgs.innerHTML = '';
+  const es = document.createElement('div');
+  es.id = 'empty-state';
+  es.className = 'empty-state';
+  es.innerHTML = `
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>
+    <div class="empty-title">Your inbox, at your command</div>
+    <div class="empty-body">Ask me anything — check emails, triage your inbox, draft replies, search for messages, or compose something new.</div>
+    <div class="quick-chips">
+      <div class="chip" onclick="quick('What are my most important unread emails right now?')">What needs my attention?</div>
+      <div class="chip" onclick="quick('Summarize my last 10 emails in a quick briefing')">Quick inbox summary</div>
+      <div class="chip" onclick="quick('Search for any emails from clients or customers that need a reply')">Client emails</div>
+      <div class="chip" onclick="quick('Draft a professional follow-up email — ask me for the details')">Write a follow-up</div>
+      <div class="chip" onclick="quick('Find any emails about payments, invoices, or money')">Financial emails</div>
+    </div>`;
+  msgs.appendChild(es);
+}
+</script>
+</body>
+</html>
